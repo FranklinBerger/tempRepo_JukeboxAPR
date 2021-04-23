@@ -47,7 +47,7 @@ xt_highint5:
 
     /* The linker has no reason to link in this file; all symbols it exports are already defined
     in the default int handler. Define a symbol here so we can use it to have the
-    linker inspect this anyway. 
+    linker inspect this anyway. */
 
     .global ld_include_xt_highint5
-ld_include_xt_highint5:*/
+ld_include_xt_highint5:

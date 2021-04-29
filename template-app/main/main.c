@@ -146,11 +146,12 @@ void app_main(void)
             MALLOC_CAP_DEFAULT);            // Pas de spécificités supplémentaires (Default)
     }
     // Outil de test: Remplissage de la table
+    // L'exemple ci-dessous fait un quart Rouge, un quart Vert, un quart Bleu, un quart Blanc
     /*for (int i = 0 ; i < T_ANGLE * T_LED ; i += T_LED * T_RGB) {
         for (int j = 0 ; j < T_LED ; j += T_RGB) {
             for (int k = 0; k < T_RGB; k++){
                 // Ici il s'agit d'une assignation, mais on peut faire ce qu'on veut
-                if (k == 2){
+                if (k == (j%3)){
                     *(apr_img_table+i+j+k) = 0x80;
                 } else {
                     *(apr_img_table+i+j+k) = 0x00;
@@ -177,8 +178,8 @@ void app_main(void)
 
 
     // Initialisation de la connection avec le broker MQTT
-    mqtt_app_start();
     mqtt_recv_table(apr_img_table, T_ANGLE*T_LED*T_RGB);    
+    mqtt_app_start();
 
 
     // Initialisation Bus SPI
@@ -194,7 +195,7 @@ void app_main(void)
 
     printf("End of Initialisation, APR started.\n");
 
-    //apr_time_comp_task(NULL);
+    apr_time_comp_task(NULL);
     //unsigned char color = 0;
     /*while (true){
         printf("\nMain Here\n");

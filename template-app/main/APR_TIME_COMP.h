@@ -27,6 +27,8 @@
 #include "esp_task_wdt.h"
 #include "driver/timer.h"
 #include "driver/gpio.h"
+//#include "gpio.h"
+#include "esp32/rom/gpio.h"
 // *** Fichiers Maison
 #include "APR_SPI.h"
 
@@ -42,7 +44,7 @@
 
 #define APR_HALL_GPIO GPIO_NUM_35
 #define APR_HALL_INTR_NUM 26
-//#define APR_HALL_INTR_FLAG ESP_INTR_FLAG_LEVEL5
+#define APR_HALL_INTR_FLAG ESP_INTR_FLAG_LEVEL3 | ESP_INTR_FLAG_IRAM
 
 #define APR_QUEUE_HALL_ISR_VALUE NULL
 
@@ -56,7 +58,7 @@ static DRAM_ATTR uint64_t* timer_value = NULL;
 static uint64_t step_delay = BIT64(63);
 static uint64_t current_angle = 0;
 static uint64_t timer_value_to_wait = 0;
-static TaskHandle_t apr_drawing_task_handle;
+//static TaskHandle_t apr_drawing_task_handle;
 //static gpio_isr_handle_t apr_hall_isr_handle;
 static portMUX_TYPE apr_time_comp_mutex;
 //static xQueueHandle apr_time_comp_queue = NULL;
@@ -94,15 +96,26 @@ void timer_comp_recv_table (unsigned char* table, unsigned int angle, unsigned i
 }
 
 
-/* Gestion des interruptions
+//Gestion des interruptions
+// Interruption bas niveau de test
 void IRAM_ATTR apr_hall_isr (){
     // Envoie un flag à la task principale
     // Actions nécessaires réalisées en son sein
     gpio_intr_disable(APR_HALL_GPIO);
-    //GPIO.status_w1tc = BIT64(APR_HALL_GPIO - 32);
-    portENTER_CRITICAL_ISR(&apr_hall_isr_flag);
-    ets_printf("coucou");
-}*/
+    apr_hall_isr_flag = true;
+    //hw->status1_w1tc.intr_st = mask;
+    
+    gpio_intr_enable(APR_HALL_GPIO);
+    //gpio_intr_ack_high(APR_HALL_GPIO - 32);
+    //gpio_ll_clear_intr_status_high(hal->dev, BIT(gpio_num - 32));
+    //gpio_hal_get_intr_status_high()
+    /*__asm__(
+        "l32r a14, .GPIO_STATUS_W1TC_REG;"
+        "l32r a15, .GPIO__NUM_30;"
+        "s32i a15, a14, 0;");*/
+    //gpio_set_level(PIN_NUM_OE, 0);
+    //ets_printf("coucou");
+}
 
 
 
@@ -154,13 +167,12 @@ void apr_time_comp_task (void* args){
    // Initialisation cpateur Hall
    // On le fait ici pour être dans le deuxième coeur 
     //vPortCPUInitializeMutex(&apr_hall_isr_flag);
-    //esp_intr_alloc( ETS_GPIO_INTR_SOURCE, APR_HALL_INTR_FLAG, NULL, NULL, NULL ) ;
     ESP_INTR_DISABLE(APR_HALL_INTR_NUM);
-    intr_matrix_set( xPortGetCoreID(), ETS_GPIO_INTR_SOURCE, APR_HALL_INTR_NUM);
+    //intr_matrix_set( xPortGetCoreID(), ETS_GPIO_INTR_SOURCE, APR_HALL_INTR_NUM);
+    // Interruption de test en C
+    esp_intr_alloc( ETS_GPIO_INTR_SOURCE, APR_HALL_INTR_FLAG, apr_hall_isr, NULL, NULL ) ;
     ESP_INTR_ENABLE(APR_HALL_INTR_NUM);
     gpio_intr_enable(APR_HALL_GPIO);
-    spi_apr_draw_color(100);
-    gpio_set_level(PIN_NUM_OE, 1);
     ESP_LOGI(TAG_TIME_APR, "Hall effect sensor interrupt initialised.");
 
     while (true){
@@ -169,11 +181,11 @@ void apr_time_comp_task (void* args){
             #if APR_TIME_COMP_TEST_MODE == true
             ESP_LOGI(TAG_TIME_APR, "Hall effect sensor interrupt executed.");
             #endif
-            //apr_hall_isr_action();
-            apr_hall_isr_flag = false;;
-            spi_apr_draw_color(100);
+            apr_hall_isr_flag = false;
+            apr_hall_isr_action();
+            /*spi_apr_draw_color(100);
             ets_delay_us(100); 
-            spi_apr_draw_color(0);
+            spi_apr_draw_color(0);*/
         }
 
         // Gestion affichage selon timer
@@ -188,9 +200,9 @@ void apr_time_comp_task (void* args){
             // Dans ce cas, un glitch se fera au tour suivant
             portENTER_CRITICAL(&apr_time_comp_mutex);
             if (current_angle < t_angle){
-                //spi_apr_draw_angle(current_angle % t_angle);
+                spi_apr_draw_angle(current_angle);
             } else {
-                //spi_apr_draw_color(0);
+                spi_apr_draw_color(0);
             }
             portEXIT_CRITICAL(&apr_time_comp_mutex);
             // Log pour débug
@@ -259,11 +271,11 @@ void apr_time_comp_init (){
     // Libère l'idle du watchdog pour éviter les erreurs (tâche constante)
     // Mais ajoute la tâche crée en échange
     // Priorité 9 pour laisse rla priorité à l'execution des interruptions
-    portENTER_CRITICAL(&apr_time_comp_mutex);
+    /*portENTER_CRITICAL(&apr_time_comp_mutex);
     xTaskCreatePinnedToCore(apr_time_comp_task, "APR_Draw_TASK", 8192, NULL, 9, &apr_drawing_task_handle, APP_CPU_NUM);
     esp_task_wdt_delete(xTaskGetIdleTaskHandleForCPU(1));
     esp_task_wdt_add(apr_drawing_task_handle);
-    portEXIT_CRITICAL(&apr_time_comp_mutex);
+    portEXIT_CRITICAL(&apr_time_comp_mutex);*/
 
     // Log pour débug
     ESP_LOGI(TAG_TIME_APR, "APR timer component successfully initialised.");

@@ -1,4 +1,4 @@
 idf_component_register(
-    SRCS "highint5.S" "main.c"
+    SRCS "main.c" #"highint5.S"
     INCLUDE_DIRS ""
 )

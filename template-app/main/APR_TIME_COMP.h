@@ -34,7 +34,7 @@
 
 
 //*************************** Définitions constantes & Variables statiques
-#define APR_TIME_COMP_TEST_MODE true
+#define APR_TIME_COMP_TEST_MODE false
 #define APR_TIMER_GROUP TIMER_GROUP_0
 #define APR_TIMER_DIVIDER 2
 

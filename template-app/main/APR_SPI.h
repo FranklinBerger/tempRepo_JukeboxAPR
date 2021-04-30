@@ -65,7 +65,7 @@ static spi_device_interface_config_t device_config = {
     .duty_cycle_pos = 128,
     .cs_ena_pretrans = 2,
     .cs_ena_posttrans = 2,
-    .clock_speed_hz = SPI_MASTER_FREQ_20M,
+    .clock_speed_hz = SPI_MASTER_FREQ_16M,
     .input_delay_ns = 20,      // Selon datasheet page 39
     .spics_io_num = PIN_NUM_CE,          // CE commun à tous les chips
     .flags = SPI_DEVICE_HALFDUPLEX,
@@ -191,10 +191,11 @@ void spi_apr_draw_angle (unsigned int angle){
         ESP_LOGE(TAG_SPI, "angle N°%d out of range.", angle);
     } else {
         // On envoi la tramme par registre, on commence par traversser nos différents registres
+        //ESP_LOGV(TAG_SPI, "Show angle N°%d : %.*s", angle, );
         for (unsigned char r = 0; r < TX_REGISTER; r++){
             // On commence par définir notre pointeur de référence (première valeur de l'angle au
             // registre sélectionné)
-            unsigned char* table_angle_point = img_apr_table + (angle * (t_led+t_rgb)) + r;
+            unsigned char* table_angle_point = img_apr_table + (angle * t_led * t_rgb) + r;
             // On traversse le tableau sur l'angle qu'on a besoin de faire
             // On ne fait que faire des (10) sauts de 15, on prend la valeur, et on intercalle
             // l'adresse du registre à chaque fois

@@ -191,7 +191,7 @@ void spi_apr_draw_angle (unsigned int angle){
         ESP_LOGE(TAG_SPI, "angle N°%d out of range.", angle);
     } else {
         // On envoi la tramme par registre, on commence par traversser nos différents registres
-        //ESP_LOGV(TAG_SPI, "Show angle N°%d : %.*s", angle, );
+        ESP_LOGV(TAG_SPI, "Show angle N°%d : %.*s", angle, (t_led * t_rgb), img_apr_table);
         for (unsigned char r = 0; r < TX_REGISTER; r++){
             // On commence par définir notre pointeur de référence (première valeur de l'angle au
             // registre sélectionné)
@@ -300,7 +300,17 @@ void spi_apr_setup (void){
     // Transmet addr = 0x41 data = 0x04 avec le bit R/~W = 0
     for (unsigned char i = 0; i < TX_CHIPS*2; i += 2){
         *(data+i) = (0x41<<1) & ~0x01;      // Adresse + bit R/~W
-        *(data+i+1) = 0x10;                 // Data, 0x50 (0x04 pour tests)
+        *(data+i+1) = 0x25;                 // Data, MAX 0x50, 0x25 bien, 0x04 pour tests
+    }
+    spi_send_data(false);
+    // On applique une gradation exponentielle pour améliorer
+    // la correspondance des couleurs et luminosité
+    // On remplis à la main car le reste se fait au sein de write_angle
+    // Transmet addr = 0x01 data = 0x05 (0x01 par défaut | 0x04 pour gradation exponentielle)
+    // avec le bit R/~W = 0
+    for (unsigned char i = 0; i < TX_CHIPS*2; i += 2){
+        *(data+i) = (0x01<<1) & ~0x01;      // Adresse + bit R/~W
+        *(data+i+1) = 0x05;                 // Data, 0x50 (0x04 pour tests)
     }
     spi_send_data(false);
     

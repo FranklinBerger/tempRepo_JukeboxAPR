@@ -192,6 +192,7 @@ void spi_apr_draw_angle (unsigned int angle){
     } else {
         // On envoi la tramme par registre, on commence par traversser nos différents registres
         ESP_LOGV(TAG_SPI, "Show angle N°%d : %.*s", angle, (t_led * t_rgb), img_apr_table);
+        unsigned char* dataAddr = NULL;
         for (unsigned char r = 0; r < TX_REGISTER; r++){
             // On commence par définir notre pointeur de référence (première valeur de l'angle au
             // registre sélectionné)
@@ -199,11 +200,13 @@ void spi_apr_draw_angle (unsigned int angle){
             // On traversse le tableau sur l'angle qu'on a besoin de faire
             // On ne fait que faire des (10) sauts de 15, on prend la valeur, et on intercalle
             // l'adresse du registre à chaque fois
+            // Dans la DDRAM, on écrit à l'envert (en premier les pixels extérieur)
             for (unsigned char c = 0; c < TX_CHIPS; c++){
+                dataAddr = (data+(2*TX_CHIPS)) - (2*c);
                 // Adresse + R/~W
-                *(data + (c*2)) = ((SPI_DEVICE_LED_ADDR+r)<<1) & ~0x01;
+                *(dataAddr) = ((SPI_DEVICE_LED_ADDR+r)<<1) & ~0x01;
                 // Data
-                *(data + (c*2) + 1) = *(table_angle_point + (c*TX_REGISTER));
+                *(dataAddr-1) = *(table_angle_point + (c*TX_REGISTER));
             }
             /*printf("Tramme N°%d: ", r);
             for (unsigned int i = 0; i < TX_CHIPS*2*sizeof(unsigned char); i++){
@@ -224,7 +227,7 @@ void spi_apr_draw_color (uint8_t color){
         // registre sélectionné)
         // On traversse le tableau sur l'angle qu'on a besoin de faire
         // On ne fait que faire des (10) sauts de 15, on prend la valeur, et on intercalle
-        // l'adresse du registre à chaque fois
+        // l'adresse du registre à chaque fois        
         for (unsigned char c = 0; c < TX_CHIPS; c++){
             // Adresse + R/~W
             *(data + (c*2)) = ((SPI_DEVICE_LED_ADDR+r)<<1) & ~0x01;
@@ -300,7 +303,7 @@ void spi_apr_setup (void){
     // Transmet addr = 0x41 data = 0x04 avec le bit R/~W = 0
     for (unsigned char i = 0; i < TX_CHIPS*2; i += 2){
         *(data+i) = (0x41<<1) & ~0x01;      // Adresse + bit R/~W
-        *(data+i+1) = 0x25;                 // Data, MAX 0x50, 0x25 bien, 0x04 pour tests
+        *(data+i+1) = 0x15;                 // Data, MAX 0x50, 0x25 bien, 0x04 pour tests
     }
     spi_send_data(false);
     // On applique une gradation exponentielle pour améliorer
@@ -308,11 +311,11 @@ void spi_apr_setup (void){
     // On remplis à la main car le reste se fait au sein de write_angle
     // Transmet addr = 0x01 data = 0x05 (0x01 par défaut | 0x04 pour gradation exponentielle)
     // avec le bit R/~W = 0
-    for (unsigned char i = 0; i < TX_CHIPS*2; i += 2){
+    /*for (unsigned char i = 0; i < TX_CHIPS*2; i += 2){
         *(data+i) = (0x01<<1) & ~0x01;      // Adresse + bit R/~W
         *(data+i+1) = 0x05;                 // Data, 0x50 (0x04 pour tests)
     }
-    spi_send_data(false);
+    spi_send_data(false);*/
     
 
     /* --- Allume la première LED (0xFF, composante rouge)

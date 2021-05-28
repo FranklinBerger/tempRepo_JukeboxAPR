@@ -31,7 +31,8 @@
 #include "mqtt_client.h"
 
 static const char* TAG_MQTT = "MQTT";
-static const char* MQTT_RESET_IMAGE_FLAG = "start_transmitting_new_image\0";
+static const char* MQTT_RESET_IMAGE_FLAG = "start_transmitting";
+static const char MQTT_RESET_IMAGE_LEN = 18;
 
 // Topic MQTT où se trouve l'image de l'APR
 #define MQTT_IMG_TOPIC "test"
@@ -118,8 +119,13 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             }
 
             // Vérification si ordre de recommencer à 0 (début transmission)
-            if (!strcmp(MQTT_RESET_IMAGE_FLAG, event->data)){
+            bool flag_reset_image = true;
+            for (uint8_t f = 0; f < MQTT_RESET_IMAGE_LEN; f++){
+                flag_reset_image &= (MQTT_RESET_IMAGE_FLAG[f] == event->data[f]);
+            }
+            if ( flag_reset_image ){
                 apr_img_cur = 0;
+                memset(apr_img_table, 0x00, apr_img_length);
                 ESP_LOGI(TAG_MQTT, "NEW IMAGE FLAG RECIEVED FROM MQTT\r\n");
             } else {
                 // Sauvegarde du packet de données
@@ -128,16 +134,18 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
                     // On ne dépasse pas la table => simple transfert de données
                     memcpy((apr_img_table+apr_img_cur), 
                     (event->data),
-                    (event->data_len));                
+                    (event->data_len));  
+                    apr_img_cur = apr_img_cur + (event->data_len);              
                 } else {
-                    // Trop de données pour la table, on coupe pour ne pas dépasser
+                    /* Trop de données pour la table, on ne copie pas
                     memcpy((apr_img_table+apr_img_cur), 
                     (event->data),
-                    apr_img_length - apr_img_cur);
+                    apr_img_length - apr_img_cur);*/
                 }
                 // Incrémenttation du curseur et remise à 0 si on est au bout
-                apr_img_cur = apr_img_cur + (event->data_len);
-                apr_img_cur = apr_img_cur<apr_img_length ? apr_img_cur : 0;
+                //printf("Table 10 first bytes: ");for (uint8_t i=0; i<100; i++){printf("%d ", *(apr_img_table+i));}
+                
+                //apr_img_cur = apr_img_cur<apr_img_length ? apr_img_cur : 0;
             }
 
             ESP_LOGI(TAG_MQTT, "MQTT data successfully saved!\n");

@@ -36,6 +36,7 @@
 #include "IDLE_APR.h"
 #include "APR_SPI.h"
 #include "APR_TIME_COMP.h"
+//#include "EXAMPLE_IMAGE.H"
 
 
 
@@ -79,7 +80,8 @@ void app_main(void)
     printf("app_main taks priority: %d\n", uxTaskPriorityGet(NULL));
     printf("*******************\n");
 
-
+    //Délais pour laisser le système s'allumer, nottament les chips
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
     // Gestion du Log Level
     // Si on travail en mode debug => Verbose (Log toutes les informations)
@@ -145,6 +147,7 @@ void app_main(void)
             sizeof(uint8),                  // Taille d'un bloc (uint8 => 8 bits)
             MALLOC_CAP_DEFAULT);            // Pas de spécificités supplémentaires (Default)
     }
+    //memcpy(apr_img_table, &EXAMPLE_IMAGE, ((T_ANGLE+1) * T_LED * T_RGB));
     // Outil de test: Remplissage de la table
     // L'exemple ci-dessous fait un quart Rouge, un quart Vert, un quart Bleu, un quart Blanc
     /*for (int i = 0 ; i < T_ANGLE * T_LED ; i += T_LED * T_RGB) {

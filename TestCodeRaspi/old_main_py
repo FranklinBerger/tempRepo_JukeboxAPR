@@ -1,0 +1,116 @@
+
+# import des librairies
+from PIL import Image
+import numpy as np
+import math
+import pprint
+import os
+
+#sélection dynamique du nom de dossier, de l'image cible et du dossier de destination
+FOLDER = os.path.normpath(os.path.dirname(os.path.abspath(__file__)))
+IMG_FOLDER = 'img/'
+IMG_FOLDER_PATH = os.path.normpath(os.path.join(FOLDER, IMG_FOLDER))
+img_name = 'Salut.png'
+print(IMG_FOLDER_PATH)
+IMG_PATH = os.path.normpath(os.path.join(IMG_FOLDER_PATH, img_name))
+print(IMG_PATH)
+
+# Constantes
+PI = math.pi
+LEDS = 55
+BANDS = int(2 * PI * LEDS)
+ANGLE = 360/BANDS
+RADIAN = ANGLE * PI / 180
+
+# ouverture d'image
+img = Image.open(IMG_PATH)
+rgb_img = img.convert('RGB')
+# stocker data de l'image dans tableau
+array_of_pixels = np.asarray(rgb_img)
+
+
+# definir la couleur des bandes a travers leurs coordonés dans l'image choisie e les stocker dans un tableau
+
+polar_array = np.zeros((BANDS, LEDS, 3), dtype=np.uint8)
+
+for band in range(BANDS):
+    alpha = band * RADIAN
+    for pixel in range(LEDS - 5):
+        x = LEDS + int(pixel * math.cos(alpha))
+        y = LEDS - int(pixel * math.sin(alpha))
+        color = array_of_pixels[x][y]   # color
+        polar_array[band, pixel] = color
+pic = Image.fromarray(polar_array, 'RGB')
+pic.save(os.path.normpath(os.path.join(IMG_FOLDER_PATH, 'my_img.jpg')), format='JPEG')
+pic.show()
+
+pic = Image.fromarray(polar_array, 'RGB')
+pic.save(os.path.normpath(os.path.join(IMG_FOLDER_PATH, 'my_img_polar.jpg')), format='JPEG')
+pic.show()
+
+polar_array_bytes = bytearray(polar_array)
+#print(polar_array_bytes)
+byte_str = b""
+for num in np.nditer(polar_array):
+    byte_str += bytes([num])
+
+
+import paho.mqtt.client as paho
+import time
+
+broker="192.168.5.1"
+port=1883
+client1= paho.Client("control1")
+client1.connect(broker,port)
+
+one = []
+for i in range(360):
+    if i < 90:
+        one.extend(b"\x00\x00\x00"*50)
+    elif i < 180:
+        one.extend(b"\xff\x00\x00"*50)
+    elif i < 270:
+        one.extend(b"\x00\xff\x00"*50)
+    elif i < 360:
+        one.extend(b"\x00\x00\xff"*50)
+one = bytearray(one)
+
+
+two = (b"\x00\x8f\x00"*17999)+b"\x00\x00\x00"
+tree = (b"\x00\x00\x8f"*17999)+b"\x00\x00\x00"
+
+
+topic='test'
+
+odd=0
+while True:
+    print("Publish " + str(one))
+
+    client1.publish(topic, b"start_transmitting_new_image")
+    client1.publish(topic,one)
+    time.sleep(10)
+
+    client1.publish(topic,byte_str)
+
+
+    time.sleep(10)
+
+
+
+
+
+
+# verifier si les bandes sont en ordre en les affichant en rond
+"""polar_array2 = np.zeros((110, 110, 3), dtype=np.uint8)
+for band in range(BANDS):
+    alpha = band * RADIAN
+    for pixel in range(LEDS):
+        x = LEDS + int(pixel * math.cos(alpha))
+        y = LEDS - int(pixel * math.sin(alpha))
+        color = polar_array[band][pixel]
+        polar_array2[x, y] = color
+
+pic = Image.fromarray(polar_array2, 'RGB')
+pic.save(os.path.normpath(os.path.join(IMG_FOLDER_PATH, 'my_img_reversed.jpg')), format='JPEG')
+pic.show()
+"""

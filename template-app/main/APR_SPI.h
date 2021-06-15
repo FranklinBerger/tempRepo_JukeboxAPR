@@ -65,7 +65,7 @@ static spi_device_interface_config_t device_config = {
     .duty_cycle_pos = 128,
     .cs_ena_pretrans = 2,
     .cs_ena_posttrans = 2,
-    .clock_speed_hz = SPI_MASTER_FREQ_16M,
+    .clock_speed_hz = SPI_MASTER_FREQ_20M,
     .input_delay_ns = 20,      // Selon datasheet page 39
     .spics_io_num = PIN_NUM_CE,          // CE commun à tous les chips
     .flags = SPI_DEVICE_HALFDUPLEX,
@@ -303,7 +303,7 @@ void spi_apr_setup (void){
     // Transmet addr = 0x41 data = 0x04 avec le bit R/~W = 0
     for (unsigned char i = 0; i < TX_CHIPS*2; i += 2){
         *(data+i) = (0x41<<1) & ~0x01;      // Adresse + bit R/~W
-        *(data+i+1) = 0x15;                 // Data, MAX 0x50, 0x25 bien, 0x04 pour tests
+        *(data+i+1) = 0x20;                 // Data, MAX 0x50, 0x25 bien, 0x04 pour tests
     }
     spi_send_data(false);
     // On applique une gradation exponentielle pour améliorer

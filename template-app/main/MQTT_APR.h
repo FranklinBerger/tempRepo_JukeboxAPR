@@ -35,7 +35,7 @@ static const char* MQTT_RESET_IMAGE_FLAG = "start_transmitting";
 static const char MQTT_RESET_IMAGE_LEN = 18;
 
 // Topic MQTT où se trouve l'image de l'APR
-#define MQTT_IMG_TOPIC "test"
+#define MQTT_IMG_TOPIC "APR_cover"
 
 // Adresse du broker MQTT
 #define CONFIG_BROKER_URL "mqtt://192.168.5.1"

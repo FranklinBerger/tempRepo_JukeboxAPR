@@ -65,7 +65,7 @@ static spi_device_interface_config_t device_config = {
     .duty_cycle_pos = 128,
     .cs_ena_pretrans = 2,
     .cs_ena_posttrans = 2,
-    .clock_speed_hz = SPI_MASTER_FREQ_16M,
+    .clock_speed_hz = SPI_MASTER_FREQ_26M,
     .input_delay_ns = 20,      // Selon datasheet page 39
     .spics_io_num = PIN_NUM_CE,          // CE commun à tous les chips
     .flags = SPI_DEVICE_HALFDUPLEX,
@@ -303,19 +303,16 @@ void spi_apr_setup (void){
     // Transmet addr = 0x41 data = 0x04 avec le bit R/~W = 0
     for (unsigned char i = 0; i < TX_CHIPS*2; i += 2){
         *(data+i) = (0x41<<1) & ~0x01;      // Adresse + bit R/~W
-        *(data+i+1) = 0x10x;                 // Data, MAX 0x50, 0x25 bien, 0x04 pour tests
+        *(data+i+1) = 0x10;                 // Data, MAX 0x50, 0x25 bien, 0x04 pour tests
     }
     spi_send_data(false);
-    // On applique une gradation exponentielle pour améliorer
-    // la correspondance des couleurs et luminosité
-    // On remplis à la main car le reste se fait au sein de write_angle
-    // Transmet addr = 0x01 data = 0x05 (0x01 par défaut | 0x04 pour gradation exponentielle)
-    // avec le bit R/~W = 0
-    /*for (unsigned char i = 0; i < TX_CHIPS*2; i += 2){
-        *(data+i) = (0x01<<1) & ~0x01;      // Adresse + bit R/~W
-        *(data+i+1) = 0x05;                 // Data, 0x50 (0x04 pour tests)
+    // On applique un délais en entre l'allumage de chaque
+	// led pour limiter le courant de pic (registre OFFSET)
+    for (unsigned char i = 0; i < TX_CHIPS*2; i += 2){
+        *(data+i) = (0x3F<<1) & ~0x01;      // Adresse + bit R/~W
+        *(data+i+1) = 0x0F;                 // Data, 0x0F
     }
-    spi_send_data(false);*/
+    spi_send_data(false);
     
 
     /* --- Allume la première LED (0xFF, composante rouge)

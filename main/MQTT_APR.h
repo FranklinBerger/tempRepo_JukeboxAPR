@@ -127,7 +127,7 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
                 apr_img_cur = 0;
                 memset(apr_img_table, 0x00, apr_img_length);
                 ESP_LOGI(TAG_MQTT, "NEW IMAGE FLAG RECIEVED FROM MQTT\r\n");
-                printf("MQTT: NEW IMAGE FLAG RECIEVED FROM MQTT");
+                // printf("MQTT: NEW IMAGE FLAG RECIEVED FROM MQTT");
             } else {
                 // Sauvegarde du packet de données
                 // Sauvegarder au maximum sans dépasser la table

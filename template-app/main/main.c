@@ -42,7 +42,7 @@
 
 //*************************** Définitions constantes
 // Mode débug ou fonctionnement normal
-#define DEBUG_MODE true
+#define DEBUG_MODE false
 
 // Taille de l'affichge
 // T_ANGLE = Nombre de pas / changement de couleurs dans un tour (modifiable si adaptation du format MQTT)
